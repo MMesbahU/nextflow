@@ -32,6 +32,8 @@ import nextflow.processor.TaskStatus
 
 import java.nio.file.Path
 
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.*
+
 @Slf4j
 /**
  * Task handler for Google Pipelines.
@@ -42,6 +44,8 @@ import java.nio.file.Path
 class GooglePipelinesTaskHandler extends TaskHandler {
 
     static private List<String> UNSTAGE_CONTROL_FILES = [TaskRun.CMD_ERRFILE, TaskRun.CMD_OUTFILE, TaskRun.CMD_EXIT, TaskRun.CMD_LOG ]
+
+    static private String DEFAULT_INSTANCE_TYPE = 'n1-standard-1'
 
     GooglePipelinesExecutor executor
     TaskBean taskBean
@@ -97,7 +101,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         this.mountPath = task.workDir.parent.parent.toString()
 
         //Get the instanceType to use for this task
-        instanceType = task.config.instanceType ?: executor.session.config.navigate("cloud.instanceType")
+        instanceType = task.config.instanceType ?: executor.session.config.navigate("cloud.instanceType") ?: DEFAULT_INSTANCE_TYPE
 
         this.taskName = GooglePipelinesHelper.sanitizeName("nf-task-${executor.session.uniqueId}-${task.name}")
         this.taskInstanceName = GooglePipelinesHelper.sanitizeName("$taskName-$task.id")
@@ -218,9 +222,9 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         final launcher = new GooglePipelinesScriptLauncher(this.taskBean, this)
         launcher.build()
 
-        String stagingScript = "mkdir -p $task.workDir\n" + stagingCommands.join("\n")
+        String stagingScript = "mkdir -p $task.workDir; (${stagingCommands.join("; ")}) 2>&1 > $task.workDir/${TaskRun.CMD_LOG}"
 
-        String mainScript = "cd $task.workDir; bash ${TaskRun.CMD_RUN} 2>&1 | tee ${TaskRun.CMD_LOG}"
+        String mainScript = "cd $task.workDir; bash ${TaskRun.CMD_RUN} 2>&1 | tee -a ${TaskRun.CMD_LOG}"
 
         /*
          * -m = run in parallel
@@ -233,9 +237,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         def gsCopyPrefix = "gsutil -m -q cp -P -c"
 
         //Copy the logs provided by Google Pipelines for the pipeline to our work dir.
-        if (System.getenv().get("NXF_DEBUG")) {
-            unstagingCommands << "$gsCopyPrefix -r /google/ ${task.workDir.toUriString()} || true".toString()
-        }
+        unstagingCommands << "[[ \$GOOGLE_PIPELINE_FAILED == 1 ]] && $gsCopyPrefix -r /google/ ${task.workDir.toUriString()} || true".toString()
 
         //add the task output files to unstaging command list
         for( String it : UNSTAGE_CONTROL_FILES ) {
@@ -245,19 +247,17 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         //Copy nextflow task progress files as well as the files we need to unstage
         String unstagingScript = unstagingCommands.join("; ").leftTrim()
 
-
         //Create the mount for out work files.
         sharedMount = executor.helper.configureMount(diskName, mountPath)
 
         //need the cloud-platform scope so that we can execute gsutil cp commands
         def resources = executor.helper.configureResources(instanceType, pipelineConfiguration.project, pipelineConfiguration.zone,pipelineConfiguration.region, diskName, [GooglePipelinesHelper.SCOPE_CLOUD_PLATFORM], pipelineConfiguration.preemptible)
 
-        def stagingAction = executor.helper.createAction("$taskInstanceName-staging".toString(), fileCopyImage, ["bash", "-c", stagingScript], [sharedMount], [GooglePipelinesHelper.ActionFlags.ALWAYS_RUN, GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS])
+        def stagingAction = executor.helper.createAction("$taskInstanceName-staging".toString(), fileCopyImage, ["bash", "-c", stagingScript], [sharedMount], [ALWAYS_RUN, IGNORE_EXIT_STATUS])
 
-        //TODO: Do we really want to override the entrypoint?
-        def mainAction = executor.helper.createAction(taskInstanceName, task.container, ['-o', 'pipefail', '-c', mainScript], [sharedMount], [GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS], "bash")
+        def mainAction = executor.helper.createAction(taskInstanceName, task.container, ['bash', '-c', mainScript], [sharedMount], [IGNORE_EXIT_STATUS])
 
-        def unstagingAction = executor.helper.createAction("$taskInstanceName-unstaging".toString(), fileCopyImage, ["bash", "-c", unstagingScript], [sharedMount], [GooglePipelinesHelper.ActionFlags.ALWAYS_RUN, GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS])
+        def unstagingAction = executor.helper.createAction("$taskInstanceName-unstaging".toString(), fileCopyImage, ["bash", "-c", unstagingScript], [sharedMount], [ALWAYS_RUN, IGNORE_EXIT_STATUS])
 
         taskPipeline = executor.helper.createPipeline([stagingAction, mainAction, unstagingAction], resources)
 

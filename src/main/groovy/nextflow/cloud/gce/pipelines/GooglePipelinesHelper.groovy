@@ -51,6 +51,10 @@ class GooglePipelinesHelper {
     final String applicationName
 
 
+    /**
+     * As defined by Google pipeline API
+     * https://cloud.google.com/genomics/reference/rest/Shared.Types/Flag
+     */
     enum ActionFlags {
         FLAG_UNSPECIFIED,
         IGNORE_EXIT_STATUS,
