@@ -32,6 +32,8 @@ import com.google.api.services.genomics.v2alpha1.model.ServiceAccount
 import com.google.api.services.genomics.v2alpha1.model.VirtualMachine
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.ALWAYS_RUN
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS
 
 @Slf4j
 @CompileStatic
@@ -40,6 +42,7 @@ import groovy.util.logging.Slf4j
  * Helper class for Google Pipelines.
  *
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
+ * @author  Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 class GooglePipelinesHelper {
 
@@ -112,7 +115,55 @@ class GooglePipelinesHelper {
         new Pipeline().setActions(actions).setResources(resources)
     }
 
-    Resources configureResources(String instanceType, String projectId, List<String> zone,List<String> region, String diskName, List<String> scopes = null, boolean preEmptible = false) {
+    Operation submitPipeline(GooglePipelinesSubmitRequest req) {
+
+        final actions = [createStagingAction(req),
+                       createMainAction(req),
+                       createUnstagingAction(req)]
+
+        final pipeline = createPipeline( actions, createResources(req) )
+
+        runPipeline(pipeline, ["taskName" : req.taskName])
+    }
+
+    protected Resources createResources(GooglePipelinesSubmitRequest req) {
+        configureResources(
+                req.instanceType,
+                req.project,
+                req.zone,
+                req.region,
+                req.diskName,
+                [GooglePipelinesHelper.SCOPE_CLOUD_PLATFORM], req.preemptible)
+    }
+
+    protected Action createMainAction(GooglePipelinesSubmitRequest req) {
+        createAction(
+                "$req.taskName-main",
+                req.containerImage,
+                ['bash', '-c', req.mainScript],
+                [req.sharedMount],
+                [IGNORE_EXIT_STATUS])
+    }
+
+    protected Action createStagingAction(GooglePipelinesSubmitRequest req) {
+        createAction(
+                "$req.taskName-stage",
+                req.fileCopyImage,
+                ["bash", "-c", req.stagingScript],
+                [req.sharedMount],
+                [ALWAYS_RUN, IGNORE_EXIT_STATUS])
+    }
+
+    protected Action createUnstagingAction(GooglePipelinesSubmitRequest req) {
+        createAction(
+                "$req.taskName-unstage",
+                req.fileCopyImage,
+                ["bash", "-c", req.unstagingScript],
+                [req.sharedMount],
+                [ALWAYS_RUN, IGNORE_EXIT_STATUS])
+    }
+
+    Resources configureResources(String instanceType, String projectId, List<String> zone, List<String> region, String diskName, List<String> scopes = null, boolean preEmptible = false) {
 
         def disk = new Disk()
         disk.setName(diskName)

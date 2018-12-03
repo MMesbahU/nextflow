@@ -50,13 +50,6 @@ class GooglePipelinesExecutor extends Executor {
 
     GooglePipelinesHelper helper
 
-    /*
-     * Used for testing purposes
-     */
-    GooglePipelinesExecutor(GooglePipelinesHelper helper) {
-        this.helper = helper
-    }
-
     GooglePipelinesExecutor() {
         this.helper = new GooglePipelinesHelper()
     }

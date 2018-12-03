@@ -1,15 +1,18 @@
 package nextflow.cloud.gce.pipelines
 
+import spock.lang.Specification
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.services.genomics.v2alpha1.Genomics
 import com.google.api.services.genomics.v2alpha1.model.Action
 import com.google.api.services.genomics.v2alpha1.model.CancelOperationRequest
+import com.google.api.services.genomics.v2alpha1.model.Mount
 import com.google.api.services.genomics.v2alpha1.model.Operation
 import com.google.api.services.genomics.v2alpha1.model.Pipeline
 import com.google.api.services.genomics.v2alpha1.model.Resources
 import com.google.api.services.genomics.v2alpha1.model.RunPipelineRequest
-import spock.lang.Shared
-import spock.lang.Specification
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.ALWAYS_RUN
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS
 
 class GooglePipelinesHelperTest extends Specification {
 
@@ -219,5 +222,158 @@ class GooglePipelinesHelperTest extends Specification {
         1 * mockClient.pipelines().run(pipeRequest).execute() >> new Operation().setName("runOp")
 
         runOp.getName() == "runOp"
+    }
+
+    def 'should create a resource request' () {
+        given:
+        def helper = Spy(GooglePipelinesHelper)
+        def req = Mock(GooglePipelinesSubmitRequest)
+
+        when:
+        def res = helper.createResources(req)
+        then:
+        req.instanceType >> 'n1-abc'
+        req.project >> 'my-project'
+        req.zone >> ['my-zone']
+        req.region >> ['my-region']
+        req.diskName >> 'my-disk'
+        req.preemptible >> true
+
+        1 * helper.configureResources(
+                'n1-abc',
+                'my-project',
+                ['my-zone'],
+                ['my-region'],
+                'my-disk',
+                [GooglePipelinesHelper.SCOPE_CLOUD_PLATFORM],
+                true )
+
+        res.getProjectId() == 'my-project'
+        res.getZones() ==['my-zone']
+        res.getRegions() == ['my-region']
+        res.getVirtualMachine().getPreemptible()
+        res.getVirtualMachine().getMachineType() == 'n1-abc'
+        res.getVirtualMachine().getDisks()[0].getName() == 'my-disk'
+    }
+
+    def 'should create main action' () {
+        given:
+        def helper = Spy(GooglePipelinesHelper)
+        def req = Mock(GooglePipelinesSubmitRequest)
+        def mount = new Mount()
+
+        when:
+        def action = helper.createMainAction(req)
+
+        then:
+        req.taskName >> 'foo'
+        req.containerImage >>'my/image'
+        req.mainScript >> 'something.sh'
+        req.sharedMount >> mount
+
+        1 * helper.createAction(
+                'foo-main',
+                'my/image',
+                ['bash', '-c', 'something.sh'],
+                [mount],
+                [IGNORE_EXIT_STATUS]
+        )
+
+        action.getName() == 'foo-main'
+        action.getImageUri() == 'my/image'
+        action.getCommands() == ['bash', '-c', 'something.sh']
+        action.getMounts() == [mount]
+        action.getFlags() == ['IGNORE_EXIT_STATUS']
+        action.getEntrypoint() == null
+        action.getEnvironment() == [:]
+    }
+
+    def 'should create staging action' () {
+        given:
+        def helper = Spy(GooglePipelinesHelper)
+        def req = Mock(GooglePipelinesSubmitRequest)
+        def mount = new Mount()
+
+        when:
+        def action = helper.createStagingAction(req)
+
+        then:
+        req.taskName >> 'bar'
+        req.fileCopyImage >> 'alpine'
+        req.stagingScript >> 'copy this and that'
+        req.sharedMount >> mount
+
+        1 * helper.createAction(
+                'bar-stage',
+                'alpine',
+                ['bash', '-c', 'copy this and that'],
+                [mount],
+                [ALWAYS_RUN, IGNORE_EXIT_STATUS]
+        )
+
+        action.getName() == 'bar-stage'
+        action.getImageUri() == 'alpine'
+        action.getCommands() == ['bash', '-c', 'copy this and that']
+        action.getMounts() == [mount]
+        action.getFlags() == ['ALWAYS_RUN', 'IGNORE_EXIT_STATUS']
+        action.getEntrypoint() == null
+        action.getEnvironment() == [:]
+    }
+
+    def 'should create unstaging action' () {
+        given:
+        def helper = Spy(GooglePipelinesHelper)
+        def req = Mock(GooglePipelinesSubmitRequest)
+        def mount = new Mount()
+
+        when:
+        def action = helper.createUnstagingAction(req)
+
+        then:
+        req.taskName >> 'bar'
+        req.fileCopyImage >> 'alpine'
+        req.unstagingScript >> 'upload command here'
+        req.sharedMount >> mount
+
+        1 * helper.createAction(
+                'bar-unstage',
+                'alpine',
+                ['bash', '-c', 'upload command here'],
+                [mount],
+                [ALWAYS_RUN, IGNORE_EXIT_STATUS]
+        )
+
+        action.getName() == 'bar-unstage'
+        action.getImageUri() == 'alpine'
+        action.getCommands() == ['bash', '-c', 'upload command here']
+        action.getMounts() == [mount]
+        action.getFlags() == ['ALWAYS_RUN', 'IGNORE_EXIT_STATUS']
+        action.getEntrypoint() == null
+        action.getEnvironment() == [:]
+    }
+
+    def 'should submit pipeline request' () {
+        given:
+        def helper = Spy(GooglePipelinesHelper)
+        def req = Mock(GooglePipelinesSubmitRequest)
+        def stage = GroovyMock(Action)
+        def unstage = GroovyMock(Action)
+        def main = GroovyMock(Action)
+        def res = GroovyMock(Resources)
+        def pipeline = GroovyMock(Pipeline)
+        def operation = GroovyMock(Operation)
+
+        when:
+        def result = helper.submitPipeline(req)
+
+        then:
+        req.taskName >> 'foo'
+        1 * helper.createStagingAction(req) >> stage
+        1 * helper.createUnstagingAction(req) >> unstage
+        1 * helper.createMainAction(req) >> main
+        1 * helper.createResources(req) >> res
+        1 * helper.createPipeline([stage, main, unstage], res) >> pipeline
+        1 * helper.runPipeline(pipeline, [taskName: 'foo']) >> operation
+        result == operation
     }
 }

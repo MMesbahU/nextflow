@@ -144,7 +144,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.workDir >> path
         session.config >> validZoneConfig
-        def executor = new GooglePipelinesExecutor(helper)
+        def executor = new GooglePipelinesExecutor(helper: helper)
         executor.session = session
 
         when:
@@ -162,7 +162,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.workDir >> path
         session.config >> validRegionConfig
-        def executor = new GooglePipelinesExecutor(helper)
+        def executor = new GooglePipelinesExecutor(helper: helper)
         executor.session = session
 
         when:

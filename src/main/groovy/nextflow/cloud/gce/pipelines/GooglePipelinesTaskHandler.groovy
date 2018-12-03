@@ -17,11 +17,12 @@
 
 package nextflow.cloud.gce.pipelines
 
+import java.nio.file.Path
+
 import com.google.api.services.genomics.v2alpha1.model.Event
 import com.google.api.services.genomics.v2alpha1.model.Metadata
 import com.google.api.services.genomics.v2alpha1.model.Mount
 import com.google.api.services.genomics.v2alpha1.model.Operation
-import com.google.api.services.genomics.v2alpha1.model.Pipeline
 import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
 import nextflow.exception.ProcessUnrecoverableException
@@ -29,10 +30,7 @@ import nextflow.processor.TaskBean
 import nextflow.processor.TaskHandler
 import nextflow.processor.TaskRun
 import nextflow.processor.TaskStatus
-
-import java.nio.file.Path
-
-import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.*
+import nextflow.util.Escape
 
 @Slf4j
 /**
@@ -43,16 +41,15 @@ import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.*
  */
 class GooglePipelinesTaskHandler extends TaskHandler {
 
-    static private List<String> UNSTAGE_CONTROL_FILES = [TaskRun.CMD_ERRFILE, TaskRun.CMD_OUTFILE, TaskRun.CMD_EXIT, TaskRun.CMD_LOG ]
+    static private List<String> UNSTAGE_CONTROL_FILES = [TaskRun.CMD_ERRFILE, TaskRun.CMD_OUTFILE, TaskRun.CMD_LOG, TaskRun.CMD_EXIT ]
 
     static private String DEFAULT_INSTANCE_TYPE = 'n1-standard-1'
 
     GooglePipelinesExecutor executor
-    TaskBean taskBean
-    GooglePipelinesConfiguration pipelineConfiguration
+    
+    @PackageScope GooglePipelinesConfiguration pipelineConfiguration
 
-    String taskName
-    String taskInstanceName
+    private TaskBean taskBean
 
     private Path exitFile
     private Path wrapperFile
@@ -64,21 +61,21 @@ class GooglePipelinesTaskHandler extends TaskHandler {
     private Path stubFile
     private Path traceFile
 
-    final String instanceType
-    final String mountPath
+    private String instanceType
+    private String mountPath
+
     final static String diskName = "nf-pipeline-work"
     final static String fileCopyImage = "google/cloud-sdk:alpine"
 
-    Mount sharedMount
-    Pipeline taskPipeline
+    private Mount sharedMount
 
-    Operation operation
+    private Operation operation
+
     private Metadata metadata
 
-    @PackageScope
-    final List<String> stagingCommands = []
-    @PackageScope
-    final List<String> unstagingCommands = []
+    @PackageScope List<String> stagingCommands = []
+
+    @PackageScope List<String> unstagingCommands = []
 
     GooglePipelinesTaskHandler(TaskRun task, GooglePipelinesExecutor executor, GooglePipelinesConfiguration pipelineConfiguration) {
         super(task)
@@ -101,10 +98,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         this.mountPath = task.workDir.parent.parent.toString()
 
         //Get the instanceType to use for this task
-        instanceType = task.config.instanceType ?: executor.session.config.navigate("cloud.instanceType") ?: DEFAULT_INSTANCE_TYPE
-
-        this.taskName = GooglePipelinesHelper.sanitizeName("nf-task-${executor.session.uniqueId}-${task.name}")
-        this.taskInstanceName = GooglePipelinesHelper.sanitizeName("$taskName-$task.id")
+        instanceType = executor.getSession().config.navigate("cloud.instanceType") ?: DEFAULT_INSTANCE_TYPE
 
         validateConfiguration()
 
@@ -218,11 +212,28 @@ class GooglePipelinesTaskHandler extends TaskHandler {
 
     @Override
     void submit() {
+        createTaskWrapper()
+        final req = createPipelineRequest()
+        operation = submitPipeline(req)
+        status = TaskStatus.SUBMITTED
+        log.trace "[GOOGLE PIPELINE] Submitted task '$task.name. Assigned Pipeline operation name = '${operation.getName()}'"
+    }
 
-        final launcher = new GooglePipelinesScriptLauncher(this.taskBean, this)
-        launcher.build()
+    @PackageScope
+    void createTaskWrapper() {
+        new GooglePipelinesScriptLauncher(this.taskBean, this) .build()
+    }
 
-        String stagingScript = "mkdir -p $task.workDir; (${stagingCommands.join("; ")}) 2>&1 > $task.workDir/${TaskRun.CMD_LOG}"
+    @PackageScope
+    Operation submitPipeline(GooglePipelinesSubmitRequest request) {
+        executor.helper.submitPipeline(request)
+    }
+
+    @PackageScope
+    GooglePipelinesSubmitRequest createPipelineRequest() {
+        String stagingScript = "mkdir -p ${task.workDir.toString()}"
+        if( stagingCommands )
+            stagingScript += "; (${stagingCommands.join("; ")}) 2>&1 > $task.workDir/${TaskRun.CMD_LOG}"
 
         String mainScript = "cd $task.workDir; bash ${TaskRun.CMD_RUN} 2>&1 | tee -a ${TaskRun.CMD_LOG}"
 
@@ -234,37 +245,37 @@ class GooglePipelinesTaskHandler extends TaskHandler {
          * -c = continues on errors
          * -r = recursive copy
          */
-        def gsCopyPrefix = "gsutil -m -q cp -P -c"
+        def gsCopyPrefix = "gsutil -m -q cp -c -P"
 
         //Copy the logs provided by Google Pipelines for the pipeline to our work dir.
-        unstagingCommands << "[[ \$GOOGLE_PIPELINE_FAILED == 1 ]] && $gsCopyPrefix -r /google/ ${task.workDir.toUriString()} || true".toString()
+        def unstaging = []
+        unstaging << "[[ \$GOOGLE_PIPELINE_FAILED == 1 ]] && $gsCopyPrefix -r /google/ ${task.workDir.toUriString()} || true".toString()
+        unstaging.addAll(unstagingCommands)
 
         //add the task output files to unstaging command list
         for( String it : UNSTAGE_CONTROL_FILES ) {
-            unstagingCommands << "$gsCopyPrefix $task.workDir/$it ${task.workDir.toUriString()} || true".toString()
+            unstaging << "$gsCopyPrefix $task.workDir/${Escape.path(it)} ${task.workDir.toUriString()} || true".toString()
         }
-
-        //Copy nextflow task progress files as well as the files we need to unstage
-        String unstagingScript = unstagingCommands.join("; ").leftTrim()
 
         //Create the mount for out work files.
         sharedMount = executor.helper.configureMount(diskName, mountPath)
 
-        //need the cloud-platform scope so that we can execute gsutil cp commands
-        def resources = executor.helper.configureResources(instanceType, pipelineConfiguration.project, pipelineConfiguration.zone,pipelineConfiguration.region, diskName, [GooglePipelinesHelper.SCOPE_CLOUD_PLATFORM], pipelineConfiguration.preemptible)
-
-        def stagingAction = executor.helper.createAction("$taskInstanceName-staging".toString(), fileCopyImage, ["bash", "-c", stagingScript], [sharedMount], [ALWAYS_RUN, IGNORE_EXIT_STATUS])
-
-        def mainAction = executor.helper.createAction(taskInstanceName, task.container, ['bash', '-c', mainScript], [sharedMount], [IGNORE_EXIT_STATUS])
-
-        def unstagingAction = executor.helper.createAction("$taskInstanceName-unstaging".toString(), fileCopyImage, ["bash", "-c", unstagingScript], [sharedMount], [ALWAYS_RUN, IGNORE_EXIT_STATUS])
-
-        taskPipeline = executor.helper.createPipeline([stagingAction, mainAction, unstagingAction], resources)
-
-        //Run the operation and att a label with the name of the task
-        operation = executor.helper.runPipeline(taskPipeline,["taskName" : taskName])
-        status = TaskStatus.SUBMITTED
-
-        log.trace "[GOOGLE PIPELINE] Submitted task '$task.name. Assigned Pipeline operation name = '${operation.getName()}'"
+        def req = new GooglePipelinesSubmitRequest()
+        req.instanceType = instanceType
+        req.project = pipelineConfiguration.project
+        req.zone = pipelineConfiguration.zone
+        req.region = pipelineConfiguration.region
+        req.diskName = diskName
+        req.preemptible = pipelineConfiguration.preemptible
+        req.taskName = "nf-$task.hash"
+        req.containerImage = task.container
+        req.fileCopyImage = fileCopyImage
+        req.stagingScript = stagingScript
+        req.mainScript = mainScript
+        req.unstagingScript = unstaging.join("; ").leftTrim()
+        req.sharedMount = sharedMount
+        return req
     }
+
+
 }
