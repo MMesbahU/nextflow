@@ -24,7 +24,7 @@ Cloud configuration attributes are provided in the ``nextflow.config`` file as s
 
 The above attributes define the image ID and instance type to be used along with the project and zone to be used. Replace these values with the ones of your choice.
 
-Nextflow only requires a Linux image that provides support for `Cloud-init <http://cloudinit.readthedocs.io/>`_ bootstrapping mechanism and includes a Java runtime (version 8) and a Docker engine (version 1.11 or higher).
+Nextflow only requires a Linux image that provides support for `Cloud-init <http://cloudinit.readthedocs.io/>`_ bootstrapping mechanism and includes a Java runtime (version 8) and a Docker engine (version 1.11 or later).
 
 
 Credentials
@@ -38,10 +38,10 @@ Download the Google Cloud CLI and initialise using the following command::
 
 Create and download credentials for google cloud in the console using the following procedure:
 
-* Go to APIs & Services → Credentials →  Create Credentials
+* Go to APIs & Services → Credentials → Create Credentials
 * Select Service account key.
 * Choose the following Roles: Genomics > Genomics Admin, Storage > Storage Object Admin, & Service Account > Service Account User
-* Download the json file and save as "creds.json".
+* Download the json file and save as ``creds.json``.
 
 Export as env variable::
 
@@ -50,7 +50,8 @@ Export as env variable::
 User & SSH key management
 -------------------------
 
-By default Nextflow creates in each GCE instance a user with the same name as the one in your local computer and install the SSH public key available at the path $HOME/.ssh/id_rsa.pub. A different user/key can be specified as shown below::
+By default Nextflow creates in each GCE instance a user with the same name as the one in your local computer and install the SSH public key available at the path ``$HOME/.ssh/id_rsa.pub``.
+A different user/key can be specified as shown below::
 
     cloud {
         userName = 'the-user-name'
@@ -66,7 +67,7 @@ Cluster deployment
 
 Once you have defined the configuration settings in the ``nextflow.config`` file you can create the cloud cluster by using the following command::
 
-    ./nextflow cloud create my-cluster -c <num-of-nodes>
+    nextflow cloud create my-cluster -c <num-of-nodes>
 
 The string ``my-cluster`` identifies the cluster instance. Replace it with a name of your choice.
 
@@ -168,9 +169,11 @@ Read :ref:`Cloud configuration<config-cloud>` section to learn more about advanc
 Google Pipelines API
 ====================
 
-Google Pipelines API is a managed computing service that allows the execution of containerized workloads in the Google Cloud Platform infrastructure.
+Google Pipelines API (a.k.a. `Genomics API <https://cloud.google.com/genomics/docs/quickstart>`_) is a managed computing
+service that allows the execution of containerized workloads in the Google Cloud Platform infrastructure.
 
-Nextflow provides built-in support for Google Pipelines API which allows the seamless deployment of a Nextflow pipeline in the cloud, offloading the process executions as pipelines.
+Nextflow provides built-in support for Google Pipelines API which allows the seamless deployment of a Nextflow pipeline
+in the cloud, offloading the process executions as pipelines.
 
 Download Google Cloud CLI and initialize using the following command::
 
@@ -183,15 +186,15 @@ Create and download credentials for google cloud in the console:
 * Go to APIs & Services → Credentials → Create Credentials
 * Select Service account key.
 * Choose the following Roles: Genomics > Genomics Admin, Storage > Storage Object Admin, & Service Account > Service Account User
-* Download the json file and save as "creds.json".
+* Download the json file and save as ``creds.json``.
 
-Export as env variable::
+Export as environment variable::
 
     export GOOGLE_APPLICATION_CREDENTIALS=$PWD/creds.json
 
 Create a nextflow.config file in the project root directory. The config must specify the following parameters:
 
-* workDir - **Must be a GS bucket**
+* workDir - **Must be a Google Storage bucket**
 * process.executor - **googlepipelines**
 * gce.project - **GCP project to run in**
 * gce.zone *or* gce.region - You need to specify either one, **not** both. Multiple regions og zones can be specified by separating them with a comma (,).
