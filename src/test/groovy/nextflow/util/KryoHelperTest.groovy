@@ -15,6 +15,10 @@
  */
 
 package nextflow.util
+
+import java.nio.file.Path
+
+import com.google.cloud.storage.contrib.nio.CloudStoragePath
 import nextflow.container.ContainerConfig
 import nextflow.file.FileHelper
 import spock.lang.Specification
@@ -165,15 +169,16 @@ class KryoHelperTest extends  Specification {
         KryoHelper.deserialize(buffer).toUri() == new URI('http://host.com/foo.txt')
     }
 
-    def 'should serialize a cloudpath'() {
+    def 'should serialize a google cloud path'() {
         when:
-        def uri = URI.create("gs://bucket/dir/file.txt")
+        def uri = URI.create("gs://my-seq/data/ggal/sample.fq")
         def path = Paths.get(uri)
         def buffer = KryoHelper.serialize(path)
+        def copy = (Path)KryoHelper.deserialize(buffer)
         then:
-        KryoHelper.deserialize(buffer).getClass().getName() == "com.google.cloud.storage.contrib.nio.CloudStoragePath"
-        KryoHelper.deserialize(buffer).toUri() == uri
+        copy instanceof CloudStoragePath
+        copy.toUri() == uri
+        copy.toUriString() == "gs://my-seq/data/ggal/sample.fq"
     }
-
 
 }

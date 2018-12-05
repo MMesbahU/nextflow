@@ -16,6 +16,7 @@
 
 package nextflow.util
 
+import com.google.cloud.storage.contrib.nio.CloudStorageFileSystem
 import com.google.cloud.storage.contrib.nio.CloudStoragePath
 
 import java.nio.file.FileSystems
@@ -56,7 +57,7 @@ class KryoHelper {
         serializers.put( UUID, UUIDSerializer )
         serializers.put( File, FileSerializer )
         serializers.put( S3Path, PathSerializer )
-        serializers.put(CloudStoragePath,CloudStoragePathSerializer)
+        serializers.put( CloudStoragePath, CloudStoragePathSerializer )
         serializers.put( XPath, XPathSerializer )
         serializers.put( Pattern, PatternSerializer )
         serializers.put( ArrayTuple, ArrayTupleSerializer )
@@ -257,7 +258,7 @@ class PathSerializer extends Serializer<Path> {
     }
 
     @Override
-    Path  read(Kryo kryo, Input input, Class<Path> type) {
+    Path read(Kryo kryo, Input input, Class<Path> type) {
         final scheme = input.readString()
         final path = input.readString()
         log.trace "Path de-serialization > scheme: $scheme; path: $path"
@@ -270,7 +271,6 @@ class PathSerializer extends Serializer<Path> {
         def uri = URI.create("$scheme://$path")
         def fs = FileHelper.getOrCreateFileSystemFor(uri)
         return fs.provider().getPath(uri)
-
     }
 }
 
@@ -280,26 +280,21 @@ class CloudStoragePathSerializer extends Serializer<CloudStoragePath> {
 
     @Override
     void write(Kryo kryo, Output output, CloudStoragePath target) {
-        final scheme = target.getFileSystem().provider().getScheme()
-        final host = target.bucket()
-        final path = target.toString()
-        log.trace "Path serialization > scheme: $scheme; host: $host; path: $path"
-
-        output.writeString(scheme)
-        output.writeString(host)
+        def path = target.toString()
+        if( !path.startsWith('/') )  // <-- it looks a bug in the google nio library, in some case the path return is not absolute
+            path = '/' + path
+        path = target.bucket() + path
+        log.trace "Google CloudStoragePath serialisation > path=$path"
         output.writeString(path)
     }
 
     @Override
     CloudStoragePath read(Kryo kryo, Input input, Class<CloudStoragePath> type) {
-        final scheme = input.readString()
-        final host = input.readString()
         final path = input.readString()
-        log.trace "CloudStoragePath de-serialization > scheme: $scheme; host: $host; path: $path"
-
-        def uri = URI.create("$scheme://$host$path")
+        log.trace "Google CloudStoragePath de-serialization > path=$path"
+        def uri = URI.create( CloudStorageFileSystem.URI_SCHEME + '://' + path )
         def fs = FileHelper.getOrCreateFileSystemFor(uri)
-        fs.provider().getPath(uri) as CloudStoragePath
+        (CloudStoragePath) fs.provider().getPath(uri)
     }
 }
 

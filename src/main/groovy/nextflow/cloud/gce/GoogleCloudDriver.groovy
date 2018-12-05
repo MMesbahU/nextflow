@@ -167,12 +167,18 @@ class GoogleCloudDriver implements CloudDriver {
     void waitInstanceStatus(Collection<String> instanceIds, CloudInstanceStatus status) {
         def instanceStatusList
 
+        // check google cloud instance status
+        // https://cloud.google.com/compute/docs/instances/checking-instance-status
         switch (status) {
             case CloudInstanceStatus.STARTED:
-                instanceStatusList = ['PROVISIONING', 'STAGING', 'RUNNING']
+                instanceStatusList = ['RUNNING']
                 waitStatus(instanceIds, instanceStatusList)
                 break
 
+            // ideally 'READY' status should detected when the instance
+            // has terminated the boot/initialisation phase, however the GCE
+            // does not provide an API for that, therefore it's the same
+            // as 'STARTED' status (see above)
             case CloudInstanceStatus.READY:
                 instanceStatusList = ['RUNNING']
                 waitStatus(instanceIds, instanceStatusList)
@@ -195,7 +201,7 @@ class GoogleCloudDriver implements CloudDriver {
         while (!remaining.isEmpty()) {
             def filter = instanceIds.collect(this.&instanceIdToFilterExpression).join(" OR ")
             List<Instance> instances = helper.getInstanceList(filter)
-            if (instances != null && !instances.isEmpty()) {
+            if (instances) {
                 for (Instance instance : instances) {
                     if (instanceStatusList.contains(instance.status)) {
                         remaining.remove(instance.getName())

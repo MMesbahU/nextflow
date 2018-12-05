@@ -154,7 +154,7 @@ class GceApiHelper {
             Operation.Error result = blockUntilComplete(op, timeoutMs - (System.currentTimeMillis() - start),pollingIntervalMs)
             if (result != null) return result
         }
-        null
+        return null
     }
 
     Operation.Error blockUntilComplete(Operation operation, long timeoutMs = 10000, long pollingIntervalMs = 5000) {
