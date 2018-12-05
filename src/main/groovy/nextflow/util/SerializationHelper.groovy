@@ -73,7 +73,6 @@ class KryoHelper {
     /**
      * Register a new class - serializer pair
      *
-     *
      * @param clazz
      * @param item
      */

@@ -293,7 +293,7 @@ class GceApiHelper {
     }
 
     String getCredentialsFile() {
-        String credFileLocation =  credentialFileLocation()
+        String credFileLocation = credentialFileLocation()
 
         if(!credFileLocation)
             throw new MissingArgumentException("$GAC_ENV is not defined in your environment" )
