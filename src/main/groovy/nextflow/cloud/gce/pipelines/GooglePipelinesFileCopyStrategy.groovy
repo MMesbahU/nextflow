@@ -16,6 +16,9 @@
 
 package nextflow.cloud.gce.pipelines
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 import com.google.cloud.storage.contrib.nio.CloudStoragePath
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -23,16 +26,13 @@ import nextflow.executor.SimpleFileCopyStrategy
 import nextflow.processor.TaskBean
 import nextflow.util.Escape
 
-import java.nio.file.Path
-import java.nio.file.Paths
-
-@Slf4j
-@CompileStatic
 /**
  * Defines the file/script copy strategies for Google Pipelines.
  *
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
  */
+@Slf4j
+@CompileStatic
 class GooglePipelinesFileCopyStrategy extends SimpleFileCopyStrategy {
 
     GooglePipelinesTaskHandler handler

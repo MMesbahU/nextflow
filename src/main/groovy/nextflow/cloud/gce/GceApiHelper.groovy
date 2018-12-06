@@ -221,7 +221,8 @@ class GceApiHelper {
      * @return null if valid or error message
      */
     String validateLabelValue(String value) {
-        if (value == null) return null
+        if (value == null)
+            return null
 
         if (!value.matches("[a-z0-9-_]*")) {
             return "Value must consist of lowercase letters, numbers, underscores and dashes only"
@@ -229,7 +230,7 @@ class GceApiHelper {
         if (value.length() > 63) {
             return "Value exceeds maximum length of 63"
         }
-        null
+        return null
     }
 
     def setStartupScript(Instance instance, String script) {

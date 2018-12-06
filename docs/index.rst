@@ -20,8 +20,8 @@ Contents:
    executor
    config
    awscloud
-   googlecloud
    amazons3
+   gcp
    conda
    docker
    singularity

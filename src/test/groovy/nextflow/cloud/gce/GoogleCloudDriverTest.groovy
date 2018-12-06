@@ -351,6 +351,12 @@ class GoogleCloudDriverTest extends Specification {
         then:
         thrown AbortOperationException
 
+        when: 'has unsupported settings'
+        cfg = CloudConfig.create(cloud: [imageId: VALID_IMAGE_ID, instanceType: VALID_INSTANCETYPE, clusterName: VALID_CLUSTER, spotPrice: 100])
+        driver.validate(cfg)
+        then:
+        thrown AbortOperationException
+
         when: 'has a valid config'
         cfg = CloudConfig.create(cloud: [imageId: VALID_IMAGE_ID, instanceType: VALID_INSTANCETYPE, clusterName: VALID_CLUSTER])
         def result = driver.validate(cfg)

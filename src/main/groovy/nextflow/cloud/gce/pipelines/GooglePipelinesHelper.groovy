@@ -16,6 +16,8 @@
 
 package nextflow.cloud.gce.pipelines
 
+import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.*
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
@@ -32,18 +34,16 @@ import com.google.api.services.genomics.v2alpha1.model.ServiceAccount
 import com.google.api.services.genomics.v2alpha1.model.VirtualMachine
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.ALWAYS_RUN
-import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS
 
-@Slf4j
-@CompileStatic
-@SuppressWarnings("GrMethodMayBeStatic")
 /**
  * Helper class for Google Pipelines.
  *
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
  * @author  Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
+@Slf4j
+@CompileStatic
+@SuppressWarnings("GrMethodMayBeStatic")
 class GooglePipelinesHelper {
 
     static final String SCOPE_CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform"

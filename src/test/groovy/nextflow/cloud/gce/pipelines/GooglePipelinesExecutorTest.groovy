@@ -62,6 +62,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def session = Stub(Session)
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.workDir >> path
+        session.bucketDir >> null
         session.config >> [
                 "gce" : [
                         "zone" : "testZone"
@@ -83,6 +84,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def session = Stub(Session)
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.workDir >> path
+        session.bucketDir >> null
         session.config >> [
                 "gce" : [
                         "project" : "testproject"
@@ -104,7 +106,7 @@ class GooglePipelinesExecutorTest extends Specification {
         given:
         def session = Stub(Session)
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
-        session.workDir >> path
+        session.bucketDir >> path
         session.config >> [
                 "gce" : [
                         "project" : "testproject",
@@ -157,7 +159,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def session = Stub(Session)
         def helper = Mock(GooglePipelinesHelper)
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
-        session.workDir >> path
+        session.bucketDir >> path
         session.config >> validZoneConfig
         def executor = new GooglePipelinesExecutor(helper: helper)
         executor.session = session
@@ -175,7 +177,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def session = Stub(Session)
         def helper = Mock(GooglePipelinesHelper)
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
-        session.workDir >> path
+        session.bucketDir >> path
         session.config >> validRegionConfig
         def executor = new GooglePipelinesExecutor(helper: helper)
         executor.session = session

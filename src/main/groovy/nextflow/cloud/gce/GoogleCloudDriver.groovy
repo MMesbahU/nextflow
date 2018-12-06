@@ -45,14 +45,14 @@ import java.nio.file.Path
 import static nextflow.cloud.CloudConst.TAG_CLUSTER_NAME
 import static nextflow.cloud.CloudConst.TAG_CLUSTER_ROLE
 
-@Slf4j
-@CompileStatic
-@ServiceName('gce')
 /**
  * Cloud driver implementation for Google Compute Engine.
  *
  * @author Vilmundur Pálmason <vilmundur@wuxinextcode.com>
  */
+@Slf4j
+@CompileStatic
+@ServiceName('gce')
 class GoogleCloudDriver implements CloudDriver {
 
     /**
@@ -73,7 +73,6 @@ class GoogleCloudDriver implements CloudDriver {
     GoogleCloudDriver(GceApiHelper helper) {
         this.helper = helper
     }
-
 
     /**
      * Initialise the Google cloud driver with default (empty) parameters
@@ -111,30 +110,52 @@ class GoogleCloudDriver implements CloudDriver {
 
     @Override
     void validate(LaunchConfig config) {
+        if (!config.imageId)
+            throw new AbortOperationException("Missing mandatory cloud `imageId` setting")
+
+        if (!config.instanceType)
+            throw new AbortOperationException("Missing mandatory cloud `instanceType` setting")
+
         try {
-            if (!config.imageId)
-                throw new AbortOperationException("Missing mandatory cloud `imageId` setting")
-
-            if (!config.instanceType)
-                throw new AbortOperationException("Missing mandatory cloud `instanceType` setting")
-
             if (!helper.lookupImage(config.imageId))
-                throw new AbortOperationException("Unknown GCE ImageId: ${config.imageId}")
+                throw new AbortOperationException("Unknown GCE image ID: ${config.imageId}")
+        }
+        catch( Exception e ) {
+            throw new AbortOperationException("Invalid GCE image ID: ${config.imageId}", e)
+        }
 
+        try {
             if (!helper.lookupMachineType(config.instanceType))
                 throw new AbortOperationException("Unknown GCE machine type: ${config.instanceType}")
-
-            String validationError = helper.validateLabelValue(config.clusterName)
-            if (validationError != null) {
-                throw new AbortOperationException("Invalid cluster name '" + config.clusterName + "': " + validationError)
-            }
-
-            if (config.sharedStorageId && config.sharedStorageMount) {
-                throw new AbortOperationException("Shared storage not supported in Google Cloud")
-            }
-        } catch (Exception e) { //Abort the operation if we get an unhandled exception
-            throw new AbortOperationException(e)
         }
+        catch ( Exception e ) {
+            throw new AbortOperationException("Invalid GCE machine type: ${config.instanceType}", e)
+        }
+
+        String validationError = helper.validateLabelValue(config.clusterName)
+        if (validationError != null) {
+            throw new AbortOperationException("Invalid cluster name '" + config.clusterName + "': " + validationError)
+        }
+
+        checkUnsupportedSettings(config)
+    }
+
+    protected void checkUnsupportedSettings(LaunchConfig config){
+        List<String> UNSUPPORTED = [
+                'bootStorageSize',
+                'instanceRole',
+                'instanceStorageMount',
+                'instanceStorageDevice',
+                'securityGroup',
+                'sharedStorageId',
+                'sharedStorageMount',
+                'subnetId',
+                'spotPrice'
+        ]
+
+        def invalid = config.getAttributeNames().intersect(UNSUPPORTED)
+        if( invalid )
+            throw new AbortOperationException("The following cloud settings are not supported by GCE driver: ${invalid.join(', ')}")
     }
 
     @Override
@@ -240,8 +261,7 @@ class GoogleCloudDriver implements CloudDriver {
     @Override
     void eachSpotPrice(List<String> instanceTypes,
                        @ClosureParams(value = SimpleType, options = ['nextflow.cloud.types.CloudSpotPrice']) Closure callback) {
-        unsupported("eachSpotPrice")
-
+        throw new UnsupportedOperationException("Spot prices feature is not supported by the GCE driver")
     }
 
     @Override
@@ -305,7 +325,7 @@ class GoogleCloudDriver implements CloudDriver {
             shutdownFile.toFile().text
         }
         else {
-            null
+            return null
         }
     }
 
@@ -319,15 +339,11 @@ class GoogleCloudDriver implements CloudDriver {
         }
     }
 
-    static def unsupported(String msg) {
-        log.warn("UNSUPPORTED: " + msg)
-    }
-
-    static def tagToFilterExpression(String k, v) {
+    static String tagToFilterExpression(String k, v) {
         '(labels.' + k.toLowerCase() + ' = "' + (v ?: '*') + '")'
     }
 
-    static def instanceIdToFilterExpression(String instanceId) {
+    static String instanceIdToFilterExpression(String instanceId) {
         '(name = "' + instanceId + '")'
     }
 
@@ -423,7 +439,7 @@ class GoogleCloudDriver implements CloudDriver {
             profile += "export NXF_ASSETS='${cfg.sharedStorageMount}/${cfg.userName}/projects'\n"
         }
 
-        profile += 'export GOOGLE_APPLICATION_CREDENTIALS='+GCE_CREDENTIAL_FILE+"\n"
+        profile += "export GOOGLE_APPLICATION_CREDENTIALS=${GCE_CREDENTIAL_FILE}\n"
 
         if (System.getenv("NEXTFLOW_DOWNLOAD_URL")) {
             profile += 'export NEXTFLOW_DOWNLOAD_URL='+System.getenv("NEXTFLOW_DOWNLOAD_URL")+"\n"

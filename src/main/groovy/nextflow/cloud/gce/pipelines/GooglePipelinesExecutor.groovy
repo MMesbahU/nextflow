@@ -16,6 +16,7 @@
 
 package nextflow.cloud.gce.pipelines
 
+import java.nio.file.Path
 
 import com.google.cloud.storage.contrib.nio.CloudStoragePath
 import groovy.transform.CompileStatic
@@ -32,11 +33,6 @@ import nextflow.processor.TaskRun
 import nextflow.script.ScriptType
 import nextflow.util.Duration
 
-import java.nio.file.Path
-
-@Slf4j
-@SupportedScriptTypes(ScriptType.SCRIPTLET)
-@CompileStatic
 /**
  * Google Pipelines Executor.
  *
@@ -44,6 +40,9 @@ import java.nio.file.Path
  *
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
  */
+@Slf4j
+@SupportedScriptTypes(ScriptType.SCRIPTLET)
+@CompileStatic
 class GooglePipelinesExecutor extends Executor {
 
     static private GooglePipelinesConfiguration pipelineConfig
@@ -57,6 +56,11 @@ class GooglePipelinesExecutor extends Executor {
     @Override
     final boolean isContainerNative() {
         return true
+    }
+
+    @Override
+    final Path getWorkDir() {
+        session.bucketDir ?: session.workDir
     }
 
     @Override
@@ -79,7 +83,7 @@ class GooglePipelinesExecutor extends Executor {
     GooglePipelinesConfiguration validateConfiguration() {
 
         //Make sure that the workdir is a GS Bucket
-        if (!(session.workDir instanceof CloudStoragePath)) {
+        if (!(getWorkDir() instanceof CloudStoragePath)) {
             session.abort()
             throw new AbortOperationException("When using `$name` executor a GCE bucket must be provided as a working directory -- Add the option `-w gs://<your-bucket/path>` to your run command line or specify a workDir in your config file.")
         }
