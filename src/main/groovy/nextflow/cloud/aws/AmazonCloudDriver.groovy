@@ -120,7 +120,7 @@ class AmazonCloudDriver implements CloudDriver {
     @CompileDynamic
     AmazonCloudDriver(Map config) {
         // -- get the aws credentials
-        def credentials
+        List credentials
         if( config.accessKey && config.secretKey ) {
             this.accessKey = config.accessKey
             this.secretKey = config.secretKey

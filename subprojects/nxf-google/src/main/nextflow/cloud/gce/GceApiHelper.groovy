@@ -270,15 +270,10 @@ class GceApiHelper {
         if(isCredentialLocationDefined()) {
             def cred = new JsonSlurper().parseText(getCredentialsFile())
             def project = cred['project_id']
-            if(!project) {
-                throw new AbortOperationException("Could not read project from Credential file")
-            } else
-            {
-                project
-            }
-        } else {
-            readGoogleMetadata('project/project-id')
+            if(!project) throw new AbortOperationException("Could not read project from Credential file")
+            return project
         }
+        readGoogleMetadata('project/project-id')
     }
 
     String readZone() {

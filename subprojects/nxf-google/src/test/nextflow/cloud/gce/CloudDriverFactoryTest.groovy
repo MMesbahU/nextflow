@@ -14,14 +14,28 @@
  * limitations under the License.
  */
 
-include 'my-capsule'
-include 'nxf-commons'
-include 'nxf-console'
-include 'nxf-ignite'
-include 'nxf-httpfs'
-include 'nxf-ga4gh'
-include 'nxf-google'
+package nextflow.cloud.gce
 
-rootProject.children.each { prj ->
-    prj.projectDir = new File("$rootDir/subprojects/$prj.name")
+import spock.lang.Specification
+
+import nextflow.cloud.CloudDriverFactory
+
+/**
+ *
+ * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
+ */
+class CloudDriverFactoryTest extends Specification {
+
+
+    def 'should return a set of names'() {
+        expect:
+        CloudDriverFactory.getDriverNames().contains('gce')
+    }
+
+    def 'should return the driver instance' () {
+        given:
+        def cfg = [project:'rare-lattice-222412', zone:'europe-west1-b']
+        expect:
+        CloudDriverFactory.getDriver('gce', cfg) instanceof GoogleCloudDriver
+    }
 }

@@ -16,9 +16,16 @@
 
 package nextflow.cloud.gce
 
+import java.nio.file.Files
+import java.nio.file.Path
 
 import com.google.api.services.compute.Compute
-import com.google.api.services.compute.model.*
+import com.google.api.services.compute.model.AccessConfig
+import com.google.api.services.compute.model.Instance
+import com.google.api.services.compute.model.InstancesSetLabelsRequest
+import com.google.api.services.compute.model.MachineType
+import com.google.api.services.compute.model.NetworkInterface
+import com.google.api.services.compute.model.Operation
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
@@ -38,13 +45,8 @@ import nextflow.file.FileHelper
 import nextflow.processor.TaskTemplateEngine
 import nextflow.util.MemoryUnit
 import nextflow.util.ServiceName
-
-import java.nio.file.Files
-import java.nio.file.Path
-
 import static nextflow.cloud.CloudConst.TAG_CLUSTER_NAME
 import static nextflow.cloud.CloudConst.TAG_CLUSTER_ROLE
-
 /**
  * Cloud driver implementation for Google Compute Engine.
  *
@@ -90,9 +92,10 @@ class GoogleCloudDriver implements CloudDriver {
      *      - project: GCE project id
      */
     @CompileDynamic
+    @Deprecated
     GoogleCloudDriver(Map config) {
-        String zone = config.zone ?: Global.config?.gce?.zone
-        String project = config.project ?: Global.config?.gce?.project
+        String zone = config.zone ?: Global.config?.navigate('gce.zone')
+        String project = config.project ?: Global.config?.navigate('gce.project')
         this.helper = new GceApiHelper(project, zone)
         log.debug("Starting GoogleCloudDriver in project {} and zone {}", helper.project, helper.zone)
     }
@@ -153,7 +156,7 @@ class GoogleCloudDriver implements CloudDriver {
                 'spotPrice'
         ]
 
-        def invalid = config.getAttributeNames().intersect(UNSUPPORTED)
+        def invalid = config.getAttributeNames().intersect((Collection)UNSUPPORTED)
         if( invalid )
             throw new AbortOperationException("The following cloud settings are not supported by GCE driver: ${invalid.join(', ')}")
     }
@@ -422,7 +425,7 @@ class GoogleCloudDriver implements CloudDriver {
     String scriptBashEnv(LaunchConfig cfg) {
         def profile = """\
         export NXF_VER='${cfg.nextflow.version}'
-        export NXF_MODE='${cfg.nextflow.mode}'
+        export NXF_MODE='google'
         export NXF_EXECUTOR='ignite'
         export NXF_CLUSTER_JOIN='cloud:gce:${cfg.clusterName}'
         """

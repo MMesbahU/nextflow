@@ -16,6 +16,10 @@
 
 package nextflow.cloud.gce
 
+import spock.lang.IgnoreIf
+import spock.lang.Shared
+import spock.lang.Specification
+
 import com.google.api.services.compute.Compute
 import com.google.api.services.compute.model.Image
 import com.google.api.services.compute.model.Instance
@@ -24,13 +28,8 @@ import com.google.api.services.compute.model.Operation
 import nextflow.Global
 import nextflow.cloud.CloudConfig
 import nextflow.cloud.LaunchConfig
-import nextflow.cloud.types.CloudInstance
 import nextflow.cloud.types.CloudInstanceStatus
 import nextflow.exception.AbortOperationException
-import spock.lang.IgnoreIf
-import spock.lang.Shared
-import spock.lang.Specification
-
 /**
  *
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
@@ -98,7 +97,7 @@ class GoogleCloudDriverTest extends Specification {
         then:
         bash == '''
             export NXF_VER='0.21.0'
-            export NXF_MODE='ignite'
+            export NXF_MODE='google'
             export NXF_EXECUTOR='ignite'
             export NXF_CLUSTER_JOIN='cloud:gce:cluster-x'
             export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.nextflow/gce_credentials.json
@@ -113,7 +112,7 @@ class GoogleCloudDriverTest extends Specification {
         then:
         bash == '''
             export NXF_VER='0.21.0'
-            export NXF_MODE='ignite'
+            export NXF_MODE='google'
             export NXF_EXECUTOR='ignite'
             export NXF_CLUSTER_JOIN='cloud:gce:cluster-x'
             export NXF_TRACE='io.nextflow.TaskProcess'
@@ -130,7 +129,7 @@ class GoogleCloudDriverTest extends Specification {
         then:
         bash == '''
             export NXF_VER='0.21.0'
-            export NXF_MODE='ignite'
+            export NXF_MODE='google'
             export NXF_EXECUTOR='ignite'
             export NXF_CLUSTER_JOIN='cloud:gce:cluster-x'
             export NXF_OPTS='-XX:this-and-that'
@@ -150,7 +149,7 @@ class GoogleCloudDriverTest extends Specification {
         then:
         bash == '''
             export NXF_VER='0.21.0'
-            export NXF_MODE='ignite'
+            export NXF_MODE='google'
             export NXF_EXECUTOR='ignite'
             export NXF_CLUSTER_JOIN='cloud:gce:cluster-x'
             export NXF_WORK='/mount/my/path/illo/work'
@@ -214,7 +213,7 @@ class GoogleCloudDriverTest extends Specification {
                     profile=$(mktemp)
                     cat <<EOF > $profile
                     export NXF_VER='0.23.0'
-                    export NXF_MODE='ignite'
+                    export NXF_MODE='google'
                     export NXF_EXECUTOR='ignite'
                     export NXF_CLUSTER_JOIN='cloud:gce:my-cluster'
                     export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.nextflow/gce_credentials.json
@@ -392,7 +391,7 @@ class GoogleCloudDriverTest extends Specification {
     }
 
     @IgnoreIf({!GoogleCloudDriverTest.runAgainstGce()})
-    def 'should intitialize with values form the gobal config if given an empty map'() {
+    def 'should initialize with values form the gobal config if given an empty map'() {
         given:
         def globalConfig = [ gce: [project: "globalprojectname", zone: "globalprojectzone"]]
         def localCOnfig = [:]

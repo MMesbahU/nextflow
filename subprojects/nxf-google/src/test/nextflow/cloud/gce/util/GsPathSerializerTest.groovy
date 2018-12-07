@@ -14,32 +14,30 @@
  * limitations under the License.
  */
 
-package nextflow.cloud
+package nextflow.cloud.gce.util
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
+import com.google.cloud.storage.contrib.nio.CloudStoragePath
+import nextflow.util.KryoHelper
 import spock.lang.Specification
+
 /**
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-class CloudDriverFactoryTest extends Specification {
+class GsPathSerializerTest extends Specification {
 
-    def 'should load at least on driver' () {
-
+    def 'should serialize a google cloud path'() {
         when:
-        def found = CloudDriverFactory.loadDrivers()
+        def uri = URI.create("gs://my-seq/data/ggal/sample.fq")
+        def path = Paths.get(uri)
+        def buffer = KryoHelper.serialize(path)
+        def copy = (Path)KryoHelper.deserialize(buffer)
         then:
-        found.size()>0
-        found.fake == FakeCloudDriver.class
-
-    }
-
-    def 'should return a set of names'() {
-        expect:
-        CloudDriverFactory.getDriverNames()  == ['fake','aws'] as Set
-    }
-
-    def 'should return the driver instance' () {
-        expect:
-        CloudDriverFactory.getDriver('fake') instanceof FakeCloudDriver
+        copy instanceof CloudStoragePath
+        copy.toUri() == uri
+        copy.toUriString() == "gs://my-seq/data/ggal/sample.fq"
     }
 }

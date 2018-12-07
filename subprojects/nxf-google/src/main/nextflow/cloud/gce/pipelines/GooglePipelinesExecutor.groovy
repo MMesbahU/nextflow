@@ -32,6 +32,7 @@ import nextflow.processor.TaskPollingMonitor
 import nextflow.processor.TaskRun
 import nextflow.script.ScriptType
 import nextflow.util.Duration
+import nextflow.util.ServiceName
 
 /**
  * Google Pipelines Executor.
@@ -41,8 +42,9 @@ import nextflow.util.Duration
  * @author Ólafur Haukur Flygenring <olafurh@wuxinextcode.com>
  */
 @Slf4j
-@SupportedScriptTypes(ScriptType.SCRIPTLET)
 @CompileStatic
+@ServiceName('gpapi')
+@SupportedScriptTypes(ScriptType.SCRIPTLET)
 class GooglePipelinesExecutor extends Executor {
 
     static private GooglePipelinesConfiguration pipelineConfig

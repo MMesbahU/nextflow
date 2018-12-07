@@ -19,7 +19,6 @@ package nextflow.processor
 import groovy.util.logging.Slf4j
 import nextflow.Session
 import nextflow.cloud.aws.batch.AwsBatchExecutor
-import nextflow.cloud.gce.pipelines.GooglePipelinesExecutor
 import nextflow.executor.CondorExecutor
 import nextflow.executor.CrgExecutor
 import nextflow.executor.Executor
@@ -66,8 +65,7 @@ class ProcessFactory {
             'condor': CondorExecutor,
             'k8s': K8sExecutor,
             'nqsii': NqsiiExecutor,
-            'awsbatch': AwsBatchExecutor,
-            'googlepipelines': GooglePipelinesExecutor
+            'awsbatch': AwsBatchExecutor
     ]
 
     private final Session session
@@ -88,7 +86,7 @@ class ProcessFactory {
 
         // discover non-core executors
         for( Class<Executor> clazz : ServiceDiscover.load(Executor) ) {
-            log.debug "Discovered executor class: ${clazz.name}"
+            log.trace "Discovered executor class: ${clazz.name}"
             executorsMap.put(findNameByClass(clazz), clazz)
         }
     }
