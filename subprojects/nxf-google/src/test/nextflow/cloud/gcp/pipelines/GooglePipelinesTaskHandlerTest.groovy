@@ -70,7 +70,7 @@ class GooglePipelinesTaskHandlerTest extends Specification {
 
         then: 'we should get an error stating that container definition is missing'
         def error = thrown(ProcessUnrecoverableException)
-        error.getMessage() == "No container specified for process $noContainerTaskRunner.name. Either specify the container to use in the process definition or with 'process.container' value in your config"
+        error.getMessage() == "No container image specified for process $noContainerTaskRunner.name -- Either specify the container to use in the process definition or with 'process.container' value in your config"
         !handler
 
     }

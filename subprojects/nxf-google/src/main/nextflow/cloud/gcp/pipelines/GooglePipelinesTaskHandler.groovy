@@ -113,10 +113,10 @@ class GooglePipelinesTaskHandler extends TaskHandler {
 
     void validateConfiguration() {
         if (!task.container) {
-            throw new ProcessUnrecoverableException("No container specified for process $task.name. Either specify the container to use in the process definition or with 'process.container' value in your config")
+            throw new ProcessUnrecoverableException("No container image specified for process $task.name -- Either specify the container to use in the process definition or with 'process.container' value in your config")
         }
         if (!instanceType) {
-            throw new ProcessUnrecoverableException("No instanceType specified for process $task.name. Specify the instanceType with a process directive or either a 'process.instanceType' or a 'cloud.instanceType' definition in your config")
+            throw new ProcessUnrecoverableException("No instance type specified for process $task.name -- Please provide a 'cloud.instanceType' definition in your config")
         }
     }
 

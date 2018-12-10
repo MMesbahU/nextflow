@@ -76,7 +76,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
         then:
         def error = thrown(AbortOperationException)
-        error.getMessage() == "Required config value 'gcp.project' for executor null is not defined. Please add it to your process or nextflow configuration file."
+        error.getMessage() == "Required config value 'gcp.project' for executor null is not defined -- Please add it to your process or nextflow configuration file"
     }
 
     def 'should abort operation when neither zone or region are specified'() {
@@ -122,7 +122,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
         then:
         def error = thrown(AbortOperationException)
-        error.getMessage().contains("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters. Please remove one of them from your configuration.")
+        error.getMessage().contains("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters -- Please remove one of them from your configuration")
     }
 
 

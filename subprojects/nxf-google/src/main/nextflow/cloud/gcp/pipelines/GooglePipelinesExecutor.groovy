@@ -87,16 +87,16 @@ class GooglePipelinesExecutor extends Executor {
         //Make sure that the workdir is a GS Bucket
         if (!(getWorkDir() instanceof CloudStoragePath)) {
             session.abort()
-            throw new AbortOperationException("When using `$name` executor a GCE bucket must be provided as a working directory -- Add the option `-w gs://<your-bucket/path>` to your run command line or specify a workDir in your config file.")
+            throw new AbortOperationException("When using `$name` executor a GCE bucket must be provided as a working directory -- Add the option `-w gs://<your-bucket/path>` to your run command line or specify a workDir in your config file")
         }
 
         //Check for the existence of all required configuration for our executor
-        def requiredConfig = ["gcp.project"]
+        def requiredConfigs = ["gcp.project"]
 
-        requiredConfig.each {
+        for( String it : requiredConfigs ) {
             if (!session.config.navigate(it)) {
                 session.abort()
-                throw new AbortOperationException("Required config value '$it' for executor $name is not defined. Please add it to your process or nextflow configuration file.")
+                throw new AbortOperationException("Required config value '$it' for executor $name is not defined -- Please add it to your process or nextflow configuration file")
             }
         }
 
@@ -109,7 +109,7 @@ class GooglePipelinesExecutor extends Executor {
         //check if we have one of the mutual exclusive zone or region specified
         if(session.config.navigate("gcp.zone") && session.config.navigate("gcp.region")){
             session.abort()
-            throw new AbortOperationException("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters. Please remove one of them from your configuration.")
+            throw new AbortOperationException("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters -- Please remove one of them from your configuration")
         }
 
 
@@ -133,7 +133,7 @@ class GooglePipelinesExecutor extends Executor {
         def regions = (session.config.navigate("gcp.region") as String)?.split(",")?.toList()
 
 
-        return new GooglePipelinesConfiguration(
+        new GooglePipelinesConfiguration(
                 session.config.navigate("gcp.project") as String,
                 zones,
                 regions,

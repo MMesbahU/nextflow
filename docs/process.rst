@@ -1168,7 +1168,6 @@ The directives are:
 * `errorStrategy`_
 * `executor`_
 * `ext`_
-* `instanceType`_
 * `label`_
 * `maxErrors`_
 * `maxForks`_
