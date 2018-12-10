@@ -14,30 +14,43 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.util
+package nextflow.cloud.gcp.pipelines
 
-import java.nio.file.Path
-import java.nio.file.Paths
-
-import com.google.cloud.storage.contrib.nio.CloudStoragePath
-import nextflow.util.KryoHelper
-import spock.lang.Specification
+import com.google.api.services.genomics.v2alpha1.model.Mount
+import groovy.transform.CompileStatic
 
 /**
+ * Models Google pipeline request for a Nextflow task executor
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-class GsPathSerializerTest extends Specification {
+@CompileStatic
+class GooglePipelinesSubmitRequest {
 
-    def 'should serialize a google cloud path'() {
-        when:
-        def uri = URI.create("gs://my-seq/data/ggal/sample.fq")
-        def path = Paths.get(uri)
-        def buffer = KryoHelper.serialize(path)
-        def copy = (Path)KryoHelper.deserialize(buffer)
-        then:
-        copy instanceof CloudStoragePath
-        copy.toUri() == uri
-        copy.toUriString() == "gs://my-seq/data/ggal/sample.fq"
-    }
+    String instanceType
+
+    String project
+
+    List<String> zone
+
+    List<String> region
+
+    String diskName
+
+    boolean preemptible
+
+    String taskName
+
+    String containerImage
+
+    String fileCopyImage
+
+    String stagingScript
+
+    String mainScript
+
+    String unstagingScript
+
+    Mount sharedMount
+
 }

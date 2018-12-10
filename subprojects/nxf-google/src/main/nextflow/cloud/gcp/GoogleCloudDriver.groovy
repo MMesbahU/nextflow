@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce
+package nextflow.cloud.gcp
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -54,7 +54,7 @@ import static nextflow.cloud.CloudConst.TAG_CLUSTER_ROLE
  */
 @Slf4j
 @CompileStatic
-@ServiceName('gce')
+@ServiceName('gcp')
 class GoogleCloudDriver implements CloudDriver {
 
     /**
@@ -94,8 +94,8 @@ class GoogleCloudDriver implements CloudDriver {
     @CompileDynamic
     @Deprecated
     GoogleCloudDriver(Map config) {
-        String zone = config.zone ?: Global.config?.navigate('gce.zone')
-        String project = config.project ?: Global.config?.navigate('gce.project')
+        String zone = config.zone ?: Global.config?.navigate('gcp.zone')
+        String project = config.project ?: Global.config?.navigate('gcp.project')
         this.helper = new GceApiHelper(project, zone)
         log.debug("Starting GoogleCloudDriver in project {} and zone {}", helper.project, helper.zone)
     }
@@ -427,7 +427,7 @@ class GoogleCloudDriver implements CloudDriver {
         export NXF_VER='${cfg.nextflow.version}'
         export NXF_MODE='google'
         export NXF_EXECUTOR='ignite'
-        export NXF_CLUSTER_JOIN='cloud:gce:${cfg.clusterName}'
+        export NXF_CLUSTER_JOIN='cloud:gcp:${cfg.clusterName}'
         """
                 .stripIndent()
 

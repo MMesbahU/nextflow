@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.pipelines
+package nextflow.cloud.gcp.pipelines
 
 import java.nio.file.Path
 
@@ -91,7 +91,7 @@ class GooglePipelinesExecutor extends Executor {
         }
 
         //Check for the existence of all required configuration for our executor
-        def requiredConfig = ["gce.project"]
+        def requiredConfig = ["gcp.project"]
 
         requiredConfig.each {
             if (!session.config.navigate(it)) {
@@ -101,15 +101,15 @@ class GooglePipelinesExecutor extends Executor {
         }
 
         //check if we have one of the mutual exclusive zone or region specified
-        if(!session.config.navigate("gce.zone") && !session.config.navigate("gce.region")){
+        if(!session.config.navigate("gcp.zone") && !session.config.navigate("gcp.region")){
             session.abort()
-            throw new AbortOperationException("Missing configuration value 'gce.zone' or 'gce.region'")
+            throw new AbortOperationException("Missing configuration value 'gcp.zone' or 'gcp.region'")
         }
 
         //check if we have one of the mutual exclusive zone or region specified
-        if(session.config.navigate("gce.zone") && session.config.navigate("gce.region")){
+        if(session.config.navigate("gcp.zone") && session.config.navigate("gcp.region")){
             session.abort()
-            throw new AbortOperationException("You can't specify both 'gce.zone' and 'gce.region' configuration parameters. Please remove one of them from your configuration.")
+            throw new AbortOperationException("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters. Please remove one of them from your configuration.")
         }
 
 
@@ -129,12 +129,12 @@ class GooglePipelinesExecutor extends Executor {
             remoteBinDir = FilesEx.copyTo(session.binDir, cloudPath)
         }
 
-        def zones = (session.config.navigate("gce.zone") as String)?.split(",")?.toList()
-        def regions = (session.config.navigate("gce.region") as String)?.split(",")?.toList()
+        def zones = (session.config.navigate("gcp.zone") as String)?.split(",")?.toList()
+        def regions = (session.config.navigate("gcp.region") as String)?.split(",")?.toList()
 
 
         return new GooglePipelinesConfiguration(
-                session.config.navigate("gce.project") as String,
+                session.config.navigate("gcp.project") as String,
                 zones,
                 regions,
                 remoteBinDir,

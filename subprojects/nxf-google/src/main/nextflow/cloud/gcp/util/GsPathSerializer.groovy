@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.util
+package nextflow.cloud.gcp.util
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Serializer

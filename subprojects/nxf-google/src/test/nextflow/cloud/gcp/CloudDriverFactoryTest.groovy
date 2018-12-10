@@ -14,43 +14,28 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.pipelines
+package nextflow.cloud.gcp
 
-import com.google.api.services.genomics.v2alpha1.model.Mount
-import groovy.transform.CompileStatic
+import spock.lang.Specification
+
+import nextflow.cloud.CloudDriverFactory
 
 /**
- * Models Google pipeline request for a Nextflow task executor
  *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-@CompileStatic
-class GooglePipelinesSubmitRequest {
+class CloudDriverFactoryTest extends Specification {
 
-    String instanceType
 
-    String project
+    def 'should return a set of names'() {
+        expect:
+        CloudDriverFactory.getDriverNames().contains('gcp')
+    }
 
-    List<String> zone
-
-    List<String> region
-
-    String diskName
-
-    boolean preemptible
-
-    String taskName
-
-    String containerImage
-
-    String fileCopyImage
-
-    String stagingScript
-
-    String mainScript
-
-    String unstagingScript
-
-    Mount sharedMount
-
+    def 'should return the driver instance' () {
+        given:
+        def cfg = [project:'rare-lattice-222412', zone:'europe-west1-b']
+        expect:
+        CloudDriverFactory.getDriver('gcp', cfg) instanceof GoogleCloudDriver
+    }
 }

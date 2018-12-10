@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.pipelines
+package nextflow.cloud.gcp.pipelines
 
 import java.nio.file.Path
 

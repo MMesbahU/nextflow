@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nextflow.cloud.gce
+package nextflow.cloud.gcp
 
 import com.google.api.services.compute.Compute
 import com.google.api.services.compute.model.*

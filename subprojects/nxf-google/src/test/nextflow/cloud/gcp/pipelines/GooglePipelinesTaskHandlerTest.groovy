@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nextflow.cloud.gce.pipelines
+package nextflow.cloud.gcp.pipelines
 
 import spock.lang.Shared
 import spock.lang.Specification

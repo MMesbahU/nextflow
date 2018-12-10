@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-nextflow.cloud.gce.util.GsPathSerializer
+nextflow.cloud.gcp.util.GsPathSerializer

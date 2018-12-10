@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce
+package nextflow.cloud.gcp
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport

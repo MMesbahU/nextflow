@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gce.pipelines
+package nextflow.cloud.gcp.pipelines
 
-import static nextflow.cloud.gce.pipelines.GooglePipelinesHelper.ActionFlags.*
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
@@ -142,7 +141,7 @@ class GooglePipelinesHelper {
                 req.containerImage,
                 ['bash', '-c', req.mainScript],
                 [req.sharedMount],
-                [IGNORE_EXIT_STATUS])
+                [ActionFlags.IGNORE_EXIT_STATUS])
     }
 
     protected Action createStagingAction(GooglePipelinesSubmitRequest req) {
@@ -151,7 +150,7 @@ class GooglePipelinesHelper {
                 req.fileCopyImage,
                 ["bash", "-c", req.stagingScript],
                 [req.sharedMount],
-                [ALWAYS_RUN, IGNORE_EXIT_STATUS])
+                [ActionFlags.ALWAYS_RUN, ActionFlags.IGNORE_EXIT_STATUS])
     }
 
     protected Action createUnstagingAction(GooglePipelinesSubmitRequest req) {
@@ -160,7 +159,7 @@ class GooglePipelinesHelper {
                 req.fileCopyImage,
                 ["bash", "-c", req.unstagingScript],
                 [req.sharedMount],
-                [ALWAYS_RUN, IGNORE_EXIT_STATUS])
+                [ActionFlags.ALWAYS_RUN, ActionFlags.IGNORE_EXIT_STATUS])
     }
 
     Resources configureResources(String instanceType, String projectId, List<String> zone, List<String> region, String diskName, List<String> scopes = null, boolean preEmptible = false) {
