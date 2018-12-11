@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.util
+package nextflow.cloud.google.util
 
 import java.nio.file.Path
 import java.nio.file.Paths

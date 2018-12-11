@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -81,7 +81,7 @@ class GooglePipelinesFileCopyStrategy extends SimpleFileCopyStrategy {
         handler.stagingCommands.addAll(stagingCommands)
 
         log.debug """\
-            [GOOGLE PIPELINE] Constructed the following commands
+            [GPAPI] Constructed the following commands
             directory creation: $createDirectories
             copy staging commands: $stagingCommands""".stripIndent()
 
@@ -104,7 +104,7 @@ class GooglePipelinesFileCopyStrategy extends SimpleFileCopyStrategy {
             "gsutil -m -q cp -r -c $workDir/$escaped ${workDir.toUriString()} || true".toString()
         }
 
-        log.debug "[GOOGLE PIPELINE] Constructed the following file copy staging commands: $unstagingCommands"
+        log.debug "[GPAPI] Constructed the following file copy staging commands: $unstagingCommands"
 
         handler.unstagingCommands.addAll(unstagingCommands)
 

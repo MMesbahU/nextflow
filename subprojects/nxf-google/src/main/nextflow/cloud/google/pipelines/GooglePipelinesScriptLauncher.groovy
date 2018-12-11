@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import groovy.transform.CompileStatic
 import nextflow.executor.BashWrapperBuilder

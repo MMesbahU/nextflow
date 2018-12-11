@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import java.nio.file.Path
 
@@ -102,7 +102,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
 
         validateConfiguration()
 
-        log.debug "[GOOGLE PIPELINE] Created handler for task '${task.name}'"
+        log.debug "[GPAPI] Created handler for task '${task.name}'"
     }
 
 
@@ -152,11 +152,11 @@ class GooglePipelinesTaskHandler extends TaskHandler {
 
         def events = extractRuntimeDataFromOperation()
         events?.reverse()?.each {
-            log.trace "[GOOGLE PIPELINE] New event for task '$task.name' - time: ${it.get("timestamp")} - ${it.get("description")}"
+            log.trace "[GPAPI] New event for task '$task.name' - time: ${it.get("timestamp")} - ${it.get("description")}"
         }
 
         if (operation.getDone()) {
-            log.debug "[GOOGLE PIPELINE] Task '$task.name' complete. Start Time: ${metadata?.getStartTime()} - End Time: ${metadata?.getEndTime()}"
+            log.debug "[GPAPI] Task '$task.name' complete. Start Time: ${metadata?.getStartTime()} - End Time: ${metadata?.getEndTime()}"
 
             // finalize the task
             Integer xs = readExitFile()
@@ -198,7 +198,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
             exitFile.text as Integer
         }
         catch (Exception e) {
-            log.debug "[GOOGLE PIPELINE] Cannot read exitstatus for task: `$task.name`", e
+            log.debug "[GPAPI] Cannot read exitstatus for task: `$task.name`", e
             null
         }
     }
@@ -206,7 +206,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
     @Override
     void kill() {
         if( !operation ) return
-        log.debug "[GOOGLE PIPELINE] Killing pipeline '${operation.name}'"
+        log.debug "[GPAPI] Killing pipeline '${operation.name}'"
         executor.helper.cancelOperation(operation)
     }
 
@@ -216,7 +216,7 @@ class GooglePipelinesTaskHandler extends TaskHandler {
         final req = createPipelineRequest()
         operation = submitPipeline(req)
         status = TaskStatus.SUBMITTED
-        log.trace "[GOOGLE PIPELINE] Submitted task '$task.name. Assigned Pipeline operation name = '${operation.getName()}'"
+        log.trace "[GPAPI] Submitted task '$task.name. Assigned Pipeline operation name = '${operation.getName()}'"
     }
 
     @PackageScope

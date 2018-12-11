@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-nextflow.cloud.gcp.GoogleCloudDriver
+nextflow.cloud.google.GoogleCloudDriver

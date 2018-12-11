@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp
+package nextflow.cloud.google
 
 import spock.lang.Specification
 
@@ -29,13 +29,13 @@ class CloudDriverFactoryTest extends Specification {
 
     def 'should return a set of names'() {
         expect:
-        CloudDriverFactory.getDriverNames().contains('gcp')
+        CloudDriverFactory.getDriverNames().contains('google')
     }
 
     def 'should return the driver instance' () {
         given:
         def cfg = [project:'rare-lattice-222412', zone:'europe-west1-b']
         expect:
-        CloudDriverFactory.getDriver('gcp', cfg) instanceof GoogleCloudDriver
+        CloudDriverFactory.getDriver('google', cfg) instanceof GoogleCloudDriver
     }
 }

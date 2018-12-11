@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import spock.lang.Specification
 
@@ -26,8 +26,8 @@ import com.google.api.services.genomics.v2alpha1.model.Operation
 import com.google.api.services.genomics.v2alpha1.model.Pipeline
 import com.google.api.services.genomics.v2alpha1.model.Resources
 import com.google.api.services.genomics.v2alpha1.model.RunPipelineRequest
-import static nextflow.cloud.gcp.pipelines.GooglePipelinesHelper.ActionFlags.ALWAYS_RUN
-import static nextflow.cloud.gcp.pipelines.GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS
+import static nextflow.cloud.google.pipelines.GooglePipelinesHelper.ActionFlags.ALWAYS_RUN
+import static nextflow.cloud.google.pipelines.GooglePipelinesHelper.ActionFlags.IGNORE_EXIT_STATUS
 
 class GooglePipelinesHelperTest extends Specification {
 

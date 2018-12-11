@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import com.google.cloud.storage.contrib.nio.CloudStorageFileSystem
 import nextflow.Session
@@ -28,7 +28,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
     @Shared
     def validZoneConfig = [
-            "gcp" : [
+            "google" : [
             "project" : "testProject",
             "zone" : "testZone1,testZone2"
             ]
@@ -36,7 +36,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
     @Shared
     def validRegionConfig = [
-            "gcp" : [
+            "google" : [
                     "project" : "testProject",
                     "region" : "testRegion1,testRegion2"
             ]
@@ -64,7 +64,7 @@ class GooglePipelinesExecutorTest extends Specification {
         session.workDir >> path
         session.bucketDir >> null
         session.config >> [
-                "gcp" : [
+                "google" : [
                         "zone" : "testZone"
                 ]
         ]
@@ -76,7 +76,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
         then:
         def error = thrown(AbortOperationException)
-        error.getMessage() == "Required config value 'gcp.project' for executor null is not defined -- Please add it to your process or nextflow configuration file"
+        error.getMessage() == "Required config value 'google.project' for executor null is not defined -- Please add it to your process or nextflow configuration file"
     }
 
     def 'should abort operation when neither zone or region are specified'() {
@@ -86,7 +86,7 @@ class GooglePipelinesExecutorTest extends Specification {
         session.workDir >> path
         session.bucketDir >> null
         session.config >> [
-                "gcp" : [
+                "google" : [
                         "project" : "testproject"
                 ]
         ]
@@ -98,7 +98,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
         then:
         def error = thrown(AbortOperationException)
-        error.getMessage().contains("Missing configuration value 'gcp.zone' or 'gcp.region'")
+        error.getMessage().contains("Missing configuration value 'google.zone' or 'google.region'")
     }
 
 
@@ -108,7 +108,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.bucketDir >> path
         session.config >> [
-                "gcp" : [
+                "google" : [
                         "project" : "testproject",
                         "zone" : "testZone",
                         "region" : "testRegion"
@@ -122,7 +122,7 @@ class GooglePipelinesExecutorTest extends Specification {
 
         then:
         def error = thrown(AbortOperationException)
-        error.getMessage().contains("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters -- Please remove one of them from your configuration")
+        error.getMessage().contains("You can't specify both 'google.zone' and 'google.region' configuration parameters -- Please remove one of them from your configuration")
     }
 
 
@@ -134,7 +134,7 @@ class GooglePipelinesExecutorTest extends Specification {
         def path = CloudStorageFileSystem.forBucket("test").getPath("/")
         session.workDir >> path
         session.config >> [
-                "gcp" : [
+                "google" : [
                         (key) : configValue
                 ]
         ]
@@ -150,8 +150,8 @@ class GooglePipelinesExecutorTest extends Specification {
 
         where:
         key         |   configKey     |   configValue
-        "project"   | "gcp.project"   |   "testProject"
-        "zone"      | "gcp.zone"      |   "testZone"
+        "project"   | "google.project"   |   "testProject"
+        "zone"      | "google.zone"      |   "testZone"
     }
 
     def 'should register successfully with zone'()  {
@@ -168,8 +168,8 @@ class GooglePipelinesExecutorTest extends Specification {
         executor.register()
 
         then:
-        executor.pipelineConfig.project == validZoneConfig.gcp?.project
-        executor.pipelineConfig.zone == validZoneConfig.gcp?.zone?.split(",")?.toList()
+        executor.pipelineConfig.project == validZoneConfig.google?.project
+        executor.pipelineConfig.zone == validZoneConfig.google?.zone?.split(",")?.toList()
     }
 
     def 'should register successfully with region'()  {
@@ -186,8 +186,8 @@ class GooglePipelinesExecutorTest extends Specification {
         executor.register()
 
         then:
-        executor.pipelineConfig.project == validRegionConfig.gcp?.project
-        executor.pipelineConfig.region == validRegionConfig.gcp?.region?.split(",")?.toList()
+        executor.pipelineConfig.project == validRegionConfig.google?.project
+        executor.pipelineConfig.region == validRegionConfig.google?.region?.split(",")?.toList()
     }
 
     def 'should be containerNative'() {

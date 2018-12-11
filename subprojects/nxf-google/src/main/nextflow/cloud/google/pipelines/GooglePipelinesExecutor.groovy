@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import java.nio.file.Path
 
@@ -43,7 +43,7 @@ import nextflow.util.ServiceName
  */
 @Slf4j
 @CompileStatic
-@ServiceName('gpapi')
+@ServiceName('google-pipelines')
 @SupportedScriptTypes(ScriptType.SCRIPTLET)
 class GooglePipelinesExecutor extends Executor {
 
@@ -69,7 +69,7 @@ class GooglePipelinesExecutor extends Executor {
     void register() {
         super.register()
         pipelineConfig = validateConfiguration()
-        log.debug "[GOOGLE PIPELINE] Pipelines Configuration: '$pipelineConfig'"
+        log.debug "[GPAPI] Pipelines Configuration: '$pipelineConfig'"
     }
 
     @Override
@@ -91,7 +91,7 @@ class GooglePipelinesExecutor extends Executor {
         }
 
         //Check for the existence of all required configuration for our executor
-        def requiredConfigs = ["gcp.project"]
+        def requiredConfigs = ["google.project"]
 
         for( String it : requiredConfigs ) {
             if (!session.config.navigate(it)) {
@@ -101,15 +101,15 @@ class GooglePipelinesExecutor extends Executor {
         }
 
         //check if we have one of the mutual exclusive zone or region specified
-        if(!session.config.navigate("gcp.zone") && !session.config.navigate("gcp.region")){
+        if(!session.config.navigate("google.zone") && !session.config.navigate("google.region")){
             session.abort()
-            throw new AbortOperationException("Missing configuration value 'gcp.zone' or 'gcp.region'")
+            throw new AbortOperationException("Missing configuration value 'google.zone' or 'google.region'")
         }
 
         //check if we have one of the mutual exclusive zone or region specified
-        if(session.config.navigate("gcp.zone") && session.config.navigate("gcp.region")){
+        if(session.config.navigate("google.zone") && session.config.navigate("google.region")){
             session.abort()
-            throw new AbortOperationException("You can't specify both 'gcp.zone' and 'gcp.region' configuration parameters -- Please remove one of them from your configuration")
+            throw new AbortOperationException("You can't specify both 'google.zone' and 'google.region' configuration parameters -- Please remove one of them from your configuration")
         }
 
 
@@ -129,12 +129,12 @@ class GooglePipelinesExecutor extends Executor {
             remoteBinDir = FilesEx.copyTo(session.binDir, cloudPath)
         }
 
-        def zones = (session.config.navigate("gcp.zone") as String)?.split(",")?.toList()
-        def regions = (session.config.navigate("gcp.region") as String)?.split(",")?.toList()
+        def zones = (session.config.navigate("google.zone") as String)?.split(",")?.toList()
+        def regions = (session.config.navigate("google.region") as String)?.split(",")?.toList()
 
 
         new GooglePipelinesConfiguration(
-                session.config.navigate("gcp.project") as String,
+                session.config.navigate("google.project") as String,
                 zones,
                 regions,
                 remoteBinDir,

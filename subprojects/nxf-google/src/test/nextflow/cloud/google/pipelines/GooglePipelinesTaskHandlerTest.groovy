@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import spock.lang.Shared
 import spock.lang.Specification
@@ -244,7 +244,7 @@ class GooglePipelinesTaskHandlerTest extends Specification {
         given:
         // -- task
         def task = Mock(TaskRun)
-        task.name >> 'gcp-task'
+        task.name >> 'google-task'
         task.getWorkDir() >> Paths.get('/work/dir')
 
         // -- executor
@@ -290,7 +290,7 @@ class GooglePipelinesTaskHandlerTest extends Specification {
         given:
         // -- task
         def task = Mock(TaskRun)
-        task.name >> 'gcp-task'
+        task.name >> 'google-task'
         task.getWorkDir() >> Paths.get('/work/dir')
 
         // -- executor

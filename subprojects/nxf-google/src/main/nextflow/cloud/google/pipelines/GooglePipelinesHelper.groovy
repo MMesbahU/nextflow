@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential

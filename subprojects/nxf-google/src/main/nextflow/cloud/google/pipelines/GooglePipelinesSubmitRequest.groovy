@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nextflow.cloud.gcp.pipelines
+package nextflow.cloud.google.pipelines
 
 import com.google.api.services.genomics.v2alpha1.model.Mount
 import groovy.transform.CompileStatic
