@@ -131,7 +131,7 @@ class ProcessFactory {
         if( !executorName )
             return LocalExecutor
 
-        def clazz =  executorsMap[executorName.toLowerCase().replace('-','')]
+        def clazz =  executorsMap[executorName.toLowerCase()]
         if( !clazz )
             throw new IllegalArgumentException("Unknown executor name: $executorName")
 
