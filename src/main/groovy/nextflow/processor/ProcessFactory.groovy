@@ -113,7 +113,7 @@ class ProcessFactory {
      * @param clazz
      * @return
      */
-    def static String findNameByClass( Class<Executor> clazz ) {
+    static String findNameByClass( Class<Executor> clazz ) {
         def annotation = clazz.getAnnotation(ServiceName)
         if( annotation )
             return annotation.value()
