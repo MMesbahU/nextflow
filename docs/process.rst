@@ -1540,26 +1540,6 @@ This can be defined in the ``nextflow.config`` file as shown below::
 
     process.ext.version = '2.5.3'
 
-.. _process-instanceType:
-instanceType
-------------
-
-The ``instanceType`` directive allows you to specify a vm instanceType for your process.  This allows you to size correctly the vm instance used per process when running your nextflow script on a
-cloud enabled executor such as the googlepipelines executor. For example::
-
-    process lightweight {
-        container "alpine"
-        instanceType "n1-standard-1"
-        ...
-    }
-
-    process heavyweight {
-        container "nfcore/deepvariant"
-        instanceType "n1-highcpu-96"
-        ...
-    }
-
-.. note:: This directive is taken in account only by the ``googlepiplines`` executor: :ref:`google-pipelines-API`.
 
 
 .. _process-maxErrors:

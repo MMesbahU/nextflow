@@ -21,7 +21,7 @@ Contents:
    config
    awscloud
    amazons3
-   gcp
+   google
    conda
    docker
    singularity
